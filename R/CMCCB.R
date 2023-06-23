@@ -1,0 +1,149 @@
+#' Control de Manejo de Ciclo Completo en Borregos (CMCCB)
+#'
+#' Esta función calcula el beneficio obtenido en un ciclo de producción de borregos,
+#' tomando en cuenta los datos de peso, consumo de alimento y otros costos relacionados.
+#'
+#' @return Ganancia, Gastos_totales, Ventas totales.
+#' @export
+CalcularBeneficio <- function() {
+  tabla_manejo<- data.frame(Datos_manejo)
+  print(tabla_manejo)
+  # Calcular la ganancia diaria de peso
+  FunciónGDP <- function(Pf, Pi, DC) {
+    Gdp <- ((Pf - Pi) / DC)
+    return(Gdp)  # Gdp= Ganancia Diaria de Peso
+  }
+
+  GDP <- FunciónGDP(Pi = DatosGdp$Pi, Pf = DatosGdp$Pf, DC = DatosGdp$DC)
+  Gananciadiaria_peso <- mean(GDP)
+
+  # Calcular los kilogramos diarios de alimento consumidos
+  Kgdia_animal <- function(Consumo, Tiempo, Animales) {
+    kgdia <- ((Consumo / Tiempo) / Animales)
+    return(kgdia)   # Kg que consume un animal por día
+  }
+
+  KGDIA <- Kgdia_animal(Consumo = DatosGdp$Consumo, Tiempo = DatosGdp$Tiempo, Animales = DatosGdp$Animales)
+  KG_diarios <- mean(KGDIA)
+
+  # Calcular los pesos de acuerdo a los días transcurridos desde el inicio
+  Fechas <- Datos_manejo$fechas
+  Valores <- Datos_manejo$Peso
+  Fecha_inicial <- as.Date(Fechas, "%d/%m/%Y")
+  Fecha_actual <- Sys.Date()
+  Dias_transcurridos <- difftime(Fecha_actual, Fecha_inicial, units = "days")
+  tabla_diastranscurridos<- data.frame(Dias_transcurridos)
+  print(tabla_diastranscurridos)
+  nuevos_pesos <- Valores + (Dias_transcurridos * Gananciadiaria_peso)
+  tabla_nvospesos<- data.frame(nuevos_pesos)
+  print(tabla_nvospesos)
+
+  # En cuántos días llegan al peso objetivo
+  Peso_objetivo <- 50.0
+  Dias <- ceiling((Peso_objetivo - Valores) / Gananciadiaria_peso)
+  tabla_diasobejtivo<- data.frame(Dias)
+  print(tabla_diasobejtivo)
+  # En qué fecha llegaran al peso objetivo
+  Fechaaprox_finalización <- Fecha_inicial + Dias
+  tabla_fechaaprox<- data.frame(Fechaaprox_finalización)
+  print(tabla_fechaaprox)
+
+  # Peso final
+  Duración_ciclo <- max(Dias)
+  Peso_final <- Valores + (Duración_ciclo * Gananciadiaria_peso)
+  tabla_pf<- data.frame(Peso_final)
+  print(tabla_pf)
+
+
+  # Cálculo de los costos de cada ingrediente
+  Costos_insumos <- function(Ingrediente, Precio, Cantidad) {
+    Costos <- (Precio * Cantidad)
+    return(Costos)
+  }
+
+  Costos_alimentación <- Costos_insumos(Precio = Datos_Alimentación$Precio, Cantidad = Datos_Alimentación$Cantidad)
+  Precio_alimento <- sum(Costos_alimentación)
+  Cantidadkg_alimento <- sum(Datos_Alimentación$Cantidad)
+  Preciokg_alimento <- Precio_alimento / Cantidadkg_alimento
+
+  # Cálculo del consumo total de alimento
+  Consumo_alimentoTotal <- KG_diarios * Dias
+  tabla_consumo<- data.frame(Consumo_alimentoTotal)
+  print(tabla_consumo)
+
+  Dias_destete <- 60
+  tiempo_gestación <- 152
+  cantidad_borregos <- nrow(Datos_manejo)
+  Alimentacion_madres <- (cantidad_borregos * KG_diarios) * Dias_destete
+  Alimento_lote <- sum(Consumo_alimentoTotal) + Alimentacion_madres
+  Costo_Alimentolote <- Alimento_lote * Preciokg_alimento
+
+  # Costos de mano de obra
+  Costo_manoOb <- 250
+  Costo_MOT <- Costo_manoOb * 21
+
+  # Costo de medicamentos
+  Precio_mansanitario <- 50
+  Total_mansanitario <- cantidad_borregos * Precio_mansanitario
+
+  # Costo por el lote de borregos
+  costoxborrego <- 600
+  Costo_borregos <- cantidad_borregos * costoxborrego
+
+  # Cálculo de las categorías de los borregos
+  tabla_manejo1<- cbind(tabla_manejo, tabla_diastranscurridos)
+  print(tabla_manejo1)
+
+  Categoria_borregos <- ifelse(tabla_manejo1$Tipo == "M", "Macho",
+                               ifelse(tabla_manejo1$Tipo == "H" & tabla_manejo1$Dias_transcurridos <= 120, "Cordera", "Borrega"))
+  tabla_categoria<- data.frame(Categoria_borregos)
+  print(tabla_categoria)
+
+  tabla_completo<- cbind(tabla_manejo, tabla_diasobejtivo, tabla_diastranscurridos, tabla_categoria, tabla_nvospesos, tabla_fechaaprox, tabla_pf, tabla_consumo)
+  print(tabla_completo)
+  # Definir el precio de cada categoría de borrego
+  Precio_macho <- 70
+  Precio_borrega <- 60
+  Precio_cordera <- 66
+  Precios_borregos <- ifelse(Categoria_borregos == "Macho", Precio_macho,
+                             ifelse(Categoria_borregos == "Borrega", Precio_borrega,
+                                    ifelse(Categoria_borregos == "Cordera", Precio_cordera, NA)))
+
+  tabla_precios<- data.frame(Precios_borregos)
+  print(tabla_precios)
+
+  #Calcular costo por animal
+  Costo_borrego<- Precio_mansanitario+costoxborrego+ (Consumo_alimentoTotal*Preciokg_alimento)
+  tabla_costoxborrego<- data.frame(Costo_borrego)
+  print(tabla_costoxborrego)
+
+  #Calcular venta por animal
+  Venta_borrego<- Peso_final* Precios_borregos
+  tabla_ventaxborrego<- data.frame(Venta_borrego)
+  print(tabla_ventaxborrego)
+
+  #Calcular ganancias por animal.
+  Ganancia<- Venta_borrego - Costo_borrego
+  tabla_ganancia<- data.frame(Ganancia)
+  print(tabla_ganancia)
+
+  # Unir todas las tablas
+
+  tabla_completo <- cbind(tabla_manejo, tabla_precios, tabla_diasobejtivo, tabla_diastranscurridos, tabla_categoria, tabla_nvospesos, tabla_fechaaprox, tabla_pf, tabla_consumo, tabla_costoxborrego, tabla_ventaxborrego, tabla_ganancia)
+  print(tabla_completo)
+  View(tabla_completo)
+
+  # Calcular los gastos totales del ciclo
+  Gastos_totales <- sum(Costo_Alimentolote, Costo_MOT, Costo_borregos, Total_mansanitario)
+
+  # Calcular las ventas totales
+  Ventas <- (Peso_final * Precios_borregos)
+  ventas_totales <- sum(Ventas)
+
+  # Cálculo de la ganancia
+  Ganancias <- ventas_totales - Gastos_totales
+
+  # Retornar los resultados
+  resultados <- list(Ganancia = Ganancias, Gastos_totales = Gastos_totales, Ventas_totales = ventas_totales)
+  return(resultados)
+}

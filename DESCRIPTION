@@ -1,0 +1,11 @@
+Package: CCCB
+Type: Package
+Title: Control de Manejo de Ciclo Completo en Borregos. 
+Version: 0.1.0
+Author: Abraham Vázquez Pérez 
+Maintainer: The package maintainer <vazquezabram463@gmail.com>
+Description: Esta función calcula el beneficio obtenido en un ciclo de producción de borregos, tomando en cuenta los datos de peso, consumo de alimento y otros costos relacionados; así mismo nos devuelve en forma de tabla el número del borrego, la fecha de nacimiento, peso al nacer, los precios que tomarán dependiendo el sexo del animal, la cantidad de días en que llegarán a un peso objetivo (50 kg), los días transcurridos desde el nacimiento hasta la fecha actual, los pesos que llevan a la actualdiad, fecha aproximada de finalización, peso final y consumo total de alimento. Se trabajará con 3 excel que se deben llamar en R como "Datos_Alimentación, que incluirá 3 columnas que contengan Ingrediente, Peso, Cantidad; Datos_manejo, con 4 columnas que contengan Borrego (número del borrego), Tipo (sexo), fechas (fecha de nacimiento), Peso (peso de nacimiento); DatosGdp que tenga 6 columnas, Pi (peso inicial), Pf (peso final), DC (duración del ciclo), Consumo (kg de alimento consumido en el ciclo), Tiempo (Tiempo en que alcanzaron el Pf), Animales (cantidad de animales en los que se realizó la prueba) para calcular la ganancia diaria de peso que se trae con el alimeto utilizado.  "
+License: GPL- 3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
